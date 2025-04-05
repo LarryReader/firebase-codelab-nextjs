@@ -3,11 +3,33 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { initializeServerApp } from "firebase/app";
-
+//import { initializeServerApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app"; // Add this import
 import { firebaseConfig } from "./config";
 import { getAuth } from "firebase/auth";
 
+// TODO: resolve this
+/*
 export async function getAuthenticatedAppForUser() {
   throw new Error('not implemented');
 }
+*/
+
+export async function getAuthenticatedAppForUser() {
+  const idToken = headers().get("Authorization")?.split("Bearer ")[1];
+  console.log('firebaseConfig', JSON.stringify(firebaseConfig));
+  const firebaseServerApp = initializeServerApp(
+    firebaseConfig,
+    idToken
+      ? {
+          authIdToken: idToken,
+        }
+      : {}
+  );
+
+  const auth = getAuth(firebaseServerApp);
+  await auth.authStateReady();
+
+  return { firebaseServerApp, currentUser: auth.currentUser };
+}
+
